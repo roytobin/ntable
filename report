@@ -1,0 +1,222 @@
+
+February 2023
+Status of testing the solutions found at http://community.schemewiki.org/?p=sicp-ex-3.25
+
+FEKL acronym means: Failure to insert using an Empty Key List i.e. '().
+Then I bypass this special case check and continue with the test.
+
+================================================================================
+dzy:: lookup does not return value.  Returns weirdness: ((1 . a))a  which is not the 'a inserted.
+
+antix21:~/src/scheme/solutions % s9
+Scheme 9 from Empty Space (Reimagined)
+> (load "dzy.pure")
+>  (define t (make-table))
+>  (insert! t 'a 1 1)
+>  (lookup t 1 1)
+((1 . a))a             Huh?
+>
+
+================================================================================
+eric4brs:: FEKL.  After bypass, then vector 150 fails to match expected.
+
+antix21:~/src/scheme/solutions % diff eric.pure eric
+1c1,3
+<  (define (make-table)
+---
+> (define nil '())
+> (define false #f)
+> (define (make-table)
+25c27
+<    (define (display)
+---
+>    (define (mydisplay)
+49c51
+<              ((eq? m 'draw) (display))
+---
+>              ((eq? m 'draw) (mydisplay))
+60a63,65
+>
+> (define (insert! t keys val) ((t 'insert!) keys val))
+> (define (lookup  t keys)     ((t 'lookup) keys))
+antix21:~/src/scheme/solutions % ln -sf eric uit
+antix21:~/src/scheme/solutions % s9 stim
+*** error: Error: Mismatch:: 150
+*** file "stim", line 358
+*** trace: nil list nil equal? equal?
+
+================================================================================
+gen Genovia:: FEKL.  After bypass, then internal error at line 38.
+
+antix21:~/src/scheme/solutions % diff gen.pure gen
+0a1
+> (define false #f)
+52a54
+>  (define (lookup table key-list) ((table 'lookup-proc) key-list)) 
+53a56
+>  (define (insert! table key-list value ) ((table 'insert-proc!) value key-list)) 
+antix21:~/src/scheme/solutions % ln -sf gen uit
+antix21:~/src/scheme/solutions % s9 stim
+*** error: caar: expected nested pair, got: fox
+*** file "stim", line 38
+*** trace: equal? assoc equal? iter assoc
+
+================================================================================
+anon Anonymous:: internal error at line 38
+
+antix21:~/src/scheme/solutions % diff anon.pure anon
+42c42
+<          (for-each (lambda (x) (display #\tab)) (iota tabs))) 
+---
+>          (for-each (lambda (x) (display "  ")))) 
+70a71,72
+> (define (insert! t keys val) ((t 'insert!) keys val))
+> (define (lookup t keys)      ((t 'lookup) keys))
+antix21:~/src/scheme/solutions % ln -sf anon uit
+antix21:~/src/scheme/solutions % s9 stim
+*** error: caar: expected nested pair, got: fox
+*** file "stim", line 38
+*** trace: associate same-key? iter op associate
+
+================================================================================
+mathieu:: FEKL.  After bypass, then internal error at line 38.
+
+antix21:~/src/scheme/solutions % ln -sf math.pure uit
+antix21:~/src/scheme/solutions % s9 stim
+*** error: caar: expected nested pair, got: fox
+*** file "stim", line 38
+*** trace: equal? assoc equal? insert-helper assoc
+
+================================================================================
+ada:: internal error at line 129.
+
+antix21:~/src/scheme/solutions % diff ada.pure ada
+5c5
+<        (cond ((null? records) #false) 
+---
+>        (cond ((null? records) #f) 
+14c14
+<           ((not (pair? records)) #false) 
+---
+>           ((not (pair? records)) #f) 
+18c18
+<                       #false))))) 
+---
+>                       #f))))) 
+44c44
+<  (define (lookup keys table) 
+---
+>  (define (lookup table keys ) 
+46c46
+<  (define (insert! keys value table) 
+---
+>  (define (insert! table keys value ) 
+antix21:~/src/scheme/solutions % ln -sf ada uit
+antix21:~/src/scheme/solutions % s9 stim
+*** error: caar: expected nested pair, got: (romeo juliet)
+*** file "stim", line 129
+*** trace: same-key? assoc same-key? iter assoc
+
+================================================================================
+Yasser ya:: FEKL.  After bypass, then vector 4 fails to match expected.
+
+antix21:~/src/scheme/solutions % diff ya.pure ya
+4c4
+<  (define (lookup keys table)
+---
+>  (define (ya-lookup keys table)
+9c9
+<                      (lookup (cdr keys) (cdr record))
+---
+>                      (ya-lookup (cdr keys) (cdr record))
+12c12
+<  (define (insert! keys value table)
+---
+>  (define (ya-insert! keys value table)
+25c25
+<                    (insert! (cdr keys) value new-table))
+---
+>                    (ya-insert! (cdr keys) value new-table))
+27c27
+<                      (insert! (cdr keys) value (cdr record))
+---
+>                      (ya-insert! (cdr keys) value (cdr record))
+30c30
+<                        (insert! (cdr keys) value new-table))))))))
+---
+>                        (ya-insert! (cdr keys) value new-table))))))))
+31a32,34
+>   (define (make-table) (cons '*table* '()))
+>   (define (insert! nt keys val) (ya-insert! keys val nt))
+>   (define (lookup nt keys)      (ya-lookup keys nt))
+antix21:~/src/scheme/solutions % ln -sf ya iut
+antix21:~/src/scheme/solutions % s9 stim
+*** error: Error: Mismatch:: 4
+*** file "stim", line 212
+*** trace: assoc equal? ya-lookup is-table? equal?
+
+================================================================================
+annonymous:: pass
+antix21:~/src/scheme/solutions % diff ann.pure ann
+43a44
+>  (define make-table empty-table)
+antix21:~/src/scheme/solutions % ln -sf ann uit
+antix21:~/src/scheme/solutions % s9 stim
+antix21:~/src/scheme/solutions %    (no error messages means pass)
+
+================================================================================
+gp GP:: FEKL.  After bypass, then internal error at line 38.
+antix21:~/src/scheme/solutions % diff gp.pure gp
+10c10
+<              false))) 
+---
+>              #f))) 
+35a36,37
+> (define (lookup  t kl)     ((t 'lookup-proc)  kl))
+> (define (insert! t kl val) ((t 'insert-proc!) kl val))
+antix21:~/src/scheme/solutions % ln -sf gp iut
+antix21:~/src/scheme/solutions % s9 stim
+*** error: caar: expected nested pair, got: fox
+*** file "stim", line 38
+*** trace: equal? assoc equal? iter assoc
+
+================================================================================
+davl:: internal error at line 129.
+antix21:~/src/scheme/solutions % diff davl.pure davl
+26a27,28
+> (define (insert! nt keys val) ((nt 'insert-proc!) keys val))
+> (define (lookup nt keys)      ((nt 'lookup-proc) keys ))
+antix21:~/src/scheme/solutions % ln -sf davl iut
+antix21:~/src/scheme/solutions % s9 stim
+*** error: caar: expected nested pair, got: (romeo juliet)
+*** file "stim", line 129
+*** trace: x x l? l? assoc
+
+================================================================================
+Sphinx:: pass
+antix21:~/src/scheme/solutions % diff sph.pure sph
+82a83,84
+>  (define (insert! nt keys val) ((nt 'insert-proc!) keys val))
+>  (define (lookup nt keys ) ((nt 'lookup-proc) keys))
+antix21:~/src/scheme/solutions % ln -sf sph iut
+antix21:~/src/scheme/solutions % s9 stim
+antix21:~/src/scheme/solutions %    (no error messages means pass)
+
+================================================================================
+denis:: Vector 2 fails to match expected.
+
+antix21:~/src/scheme/solutions % !di
+diff denis.pure denis
+1c1
+< #lang sicp
+---
+> (define false #f)
+68a69,70
+> (define (insert! nt keys val) ((nt 'insert-proc!) val keys ))
+> (define (lookup nt keys )     ((nt 'lookup-proc) keys))
+antix21:~/src/scheme/solutions % ln -sf denis iut
+antix21:~/src/scheme/solutions % s9 stim
+*** error: Error: Mismatch:: 2
+*** file "stim", line 210
+*** trace: equal? s-assoc false false equal?
+
